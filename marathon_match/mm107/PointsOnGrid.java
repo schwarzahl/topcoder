@@ -27,11 +27,6 @@ sampleInput
 public class PointsOnGrid {
     public String[] findSolution(int H, int W, int h, int w, int Kmin, int Kmax, String[] grid)
     {
-        int slideH = H - h + 1;
-        int slideW = W - w + 1;
-
-        int[] hist = new int[10];
-
         int[][] real_grid = new int[H][];
         boolean[][] paintedMap = new boolean[H][];
         for (int r = 0; r < H; r++) {
@@ -40,50 +35,46 @@ public class PointsOnGrid {
             for (int c = 0; c < W; c++) {
                 int num = grid[r].charAt(c) - '0';
                 real_grid[r][c] = num;
-                hist[num]++;
             }
         }
 
-        int initNum = Kmax * H * W / h / w;
-        int paintSum = 0;
-        int paintLowerLimit;
-        for (paintLowerLimit = 9; paintSum < initNum; paintLowerLimit--) {
-            paintSum += hist[paintLowerLimit];
+        int[] hist = new int[10];
+        for (int sr = 0; sr < h; sr++) {
+            for (int sc = 0; sc < w; sc++) {
+                hist[real_grid[sr][sc]]++;
+            }
         }
 
-        int[][] paintCount = new int[H][];
-        for (int r = 0; r < H; r++) {
-            paintCount[r] = new int[W];
-            for (int c = 0; c < W; c++) {
-                if (real_grid[r][c] > paintLowerLimit) {
-                    paintedMap[r][c] = true;
-                    for (int tr = Math.max(0, r - h + 1); tr <= r; tr++) {
-                        for (int tc = Math.max(0, c - w + 1); tc <= c; tc++) {
-                            paintCount[tr][tc]++;
-                        }
-                    }
+        int[] canUse = new int[10];
+        {
+            int rest = Kmax;
+            for (int border = 9; border >= 0; border--) {
+                int use = Math.min(hist[border], rest);
+                rest -= use;
+                canUse[border] += use;
+            }
+        }
+
+        boolean[][] stamp = new boolean[h][];
+        for (int sr = 0; sr < h; sr++) {
+            stamp[sr] = new boolean[w];
+            for (int sc = 0; sc < w; sc++) {
+                int num = real_grid[sr][sc];
+                if (canUse[num] > 0) {
+                    canUse[num]--;
+                    stamp[sr][sc] = true;
                 }
             }
         }
 
-        for (int tr = 0; tr <= H - h; tr++) {
-            for (int tc = 0; tc <= W - w; tc++) {
-                if (paintCount[tr][tc] > Kmax) {
-                    for (int r = tr; r < Math.min(H, tr + h); r++) {
-                        for (int c = tc; c < Math.min(W, tc + w); c++) {
-                            if (paintCount[tr][tc] <= Kmax) {
-                                break;
-                            }
-                            if (paintedMap[r][c]) {
-                                paintedMap[r][c] = false;
-                                for (int sr = Math.max(0, r - h + 1); sr <= r; r++) {
-                                    for (int sc = Math.max(0, c - w + 1); sc <= c; sc++) {
-                                        paintCount[sr][sc]--;
-                                    }
-                                }
-                            }
-                        }
-                    }
+        long score = 0;
+        for (int r = 0; r < H; r++) {
+            for (int c = 0; c < W; c++) {
+                int ir = r % h;
+                int ic = c % w;
+                if (stamp[ir][ic]) {
+                    paintedMap[r][c] = true;
+                    score += real_grid[r][c];
                 }
             }
         }
