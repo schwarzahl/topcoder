@@ -28,27 +28,32 @@ public class PointsOnGrid {
     public String[] findSolution(int H, int W, int h, int w, int Kmin, int Kmax, String[] grid)
     {
         int[][] real_grid = new int[H][];
+        int[][] virtual_grid = new int[h][];
         boolean[][] paintedMap = new boolean[H][];
         for (int r = 0; r < H; r++) {
             real_grid[r] = new int[W];
+            if (r < h) {
+                virtual_grid[r] = new int[w];
+            }
             paintedMap[r] = new boolean[W];
             for (int c = 0; c < W; c++) {
                 int num = grid[r].charAt(c) - '0';
                 real_grid[r][c] = num;
+                virtual_grid[r % h][c % w] += num;
             }
         }
 
-        int[] hist = new int[10];
+        int[] hist = new int[100000];
         for (int sr = 0; sr < h; sr++) {
             for (int sc = 0; sc < w; sc++) {
-                hist[real_grid[sr][sc]]++;
+                hist[virtual_grid[sr][sc]]++;
             }
         }
 
-        int[] canUse = new int[10];
+        int[] canUse = new int[100000];
         {
             int rest = Kmax;
-            for (int border = 9; border >= 0; border--) {
+            for (int border = 99999; border >= 0; border--) {
                 int use = Math.min(hist[border], rest);
                 rest -= use;
                 canUse[border] += use;
@@ -59,7 +64,7 @@ public class PointsOnGrid {
         for (int sr = 0; sr < h; sr++) {
             stamp[sr] = new boolean[w];
             for (int sc = 0; sc < w; sc++) {
-                int num = real_grid[sr][sc];
+                int num = virtual_grid[sr][sc];
                 if (canUse[num] > 0) {
                     canUse[num]--;
                     stamp[sr][sc] = true;
